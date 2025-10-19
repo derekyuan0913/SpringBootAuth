@@ -1,9 +1,15 @@
 package org.yuanding.springbootauth.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -11,6 +17,7 @@ import java.time.LocalDateTime;
 @Data
 public class User implements Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,18 +33,21 @@ public class User implements Serializable {
 	@Column(nullable = false, unique = true, length = 30)
 	private String email;
 
-	@Column(nullable = true, unique = true, length = 30)
+	@Column(unique = true, length = 30)
 	private String nickName;
 
 	@Column(nullable = false)
 	private LocalDateTime regTime;
 
-	@Enumerated(EnumType.STRING)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JsonSerialize(using = RoleToStringSerializer.class)
 	private Role role;
 
-	public enum Role {
-		ADMIN,
-		USER,
-		VIP_USER
+}
+
+class RoleToStringSerializer extends JsonSerializer<Role> {
+	@Override
+	public void serialize(Role value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+		gen.writeString(String.valueOf(value == null ? null : value.getName()));
 	}
 }
